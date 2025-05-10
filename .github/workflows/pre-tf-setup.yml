@@ -1,0 +1,61 @@
+name: Terraform Setup
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  TF_STATE_RESOURCE_GROUP_NAME: ${{ vars.TF_STATE_RESOURCE_GROUP_NAME }}
+  TF_STATE_STORAGE_ACCOUNT_NAME: ${{ vars.TF_STATE_STORAGE_ACCOUNT_NAME }}
+  TF_STATE_CONTAINER_NAME: ${{ vars.TF_STATE_CONTAINER_NAME }}
+
+jobs:
+  az-tf-setup:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Check if resource group exists
+        id: check_resource_group
+        run: |
+          az group exists --name $TF_STATE_RESOURCE_GROUP_NAME
+          echo "exists=$(az group exists --name $TF_STATE_RESOURCE_GROUP_NAME)" >> $GITHUB_OUTPUT
+
+      - name: Azure Create Resource Group
+        if: steps.check_resource_group.outputs.exists == 'false'
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az group create --name $TF_STATE_RESOURCE_GROUP_NAME --location eastus
+
+      - name: Check if storage account exists
+        id: check_storage_account
+        run: |
+          az storage account check-name --name $TF_STATE_STORAGE_ACCOUNT_NAME --query nameAvailable --output tsv
+          echo "exists=$(az storage account check-name --name $TF_STATE_STORAGE_ACCOUNT_NAME --query nameAvailable --output tsv)" >> $GITHUB_OUTPUT
+
+      - name: Azure Create Storage Account
+        if: steps.check_storage_account.outputs.exists == 'false'
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage account create --name $TF_STATE_STORAGE_ACCOUNT_NAME --resource-group $TF_STATE_RESOURCE_GROUP_NAME --sku Standard_LRS --encryption-services blob
+
+      - name: Check if storage container exists
+        id: check_storage_container
+        run: |
+          az storage container exists --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME
+          echo "exists=$(az storage container exists --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME)" >> $GITHUB_OUTPUT
+
+      - name: Azure Create Storage Container
+        if: steps.check_storage_container.outputs.exists == 'false'
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az storage container create --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME
