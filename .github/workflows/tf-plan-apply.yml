@@ -24,8 +24,6 @@ env:
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
 
 jobs:
-  setup-az-pre-tf:
-    uses: ./.github/workflows/pre-tf-setup.yml
   terraform-plan:
     name: 'Terraform Plan'
     runs-on: ubuntu-latest
