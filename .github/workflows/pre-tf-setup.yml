@@ -36,10 +36,10 @@ jobs:
         id: check_storage_account
         run: |
           az storage account check-name --name $TF_STATE_STORAGE_ACCOUNT_NAME --query nameAvailable --output tsv
-          echo "exists=$(az storage account check-name --name $TF_STATE_STORAGE_ACCOUNT_NAME --query nameAvailable --output tsv)" >> $GITHUB_OUTPUT
+          echo "available=$(az storage account check-name --name $TF_STATE_STORAGE_ACCOUNT_NAME --query nameAvailable --output tsv)" >> $GITHUB_OUTPUT
 
       - name: Azure Create Storage Account
-        if: steps.check_storage_account.outputs.exists == 'false'
+        if: steps.check_storage_account.outputs.available == 'true'
         uses: azure/cli@v2
         with:
           azcliversion: latest
