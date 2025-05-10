@@ -5,6 +5,9 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import max_error, mean_absolute_error, r2_score
 from sklearn.model_selection import train_test_split
 
+import matplotlib.pyplot as plt
+import seaborn as sn
+
 
 def split_data(data: pd.DataFrame, parameters: dict) -> tuple:
     """Splits data into features and targets training and test sets.
@@ -40,7 +43,7 @@ def train_model(X_train: pd.DataFrame, y_train: pd.Series) -> LinearRegression:
 
 def evaluate_model(
     regressor: LinearRegression, X_test: pd.DataFrame, y_test: pd.Series
-) -> dict[str, float]:
+) -> tuple[dict[str, float], pd.Series]:
     """Calculates and logs the coefficient of determination.
 
     Args:
@@ -54,4 +57,9 @@ def evaluate_model(
     me = max_error(y_test, y_pred)
     logger = logging.getLogger(__name__)
     logger.info("Model has a coefficient R^2 of %.3f on test data.", score)
-    return {"r2_score": score, "mae": mae, "max_error": me}
+    eval_results = {
+        "r2_score": score,
+        "mae": mae,
+        "max_error": me,
+    }
+    return eval_results, y_pred

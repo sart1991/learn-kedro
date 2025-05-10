@@ -160,7 +160,7 @@ shuttle_passenger_capacity_plot_go:
   filepath: data/08_reporting/shuttle_passenger_capacity_plot_go.json
   versioned: true
 
-dummy_confusion_matrix:
+model_confusion_matrix_plot:
   type: matplotlib.MatplotlibWriter
-  filepath: data/08_reporting/dummy_confusion_matrix.png
+  filepath: data/08_reporting/model_confusion_matrix_plot.png
   versioned: true

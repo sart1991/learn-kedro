@@ -12,6 +12,7 @@ Create the service principal:
 ```bash
 az ad sp create-for-rbac --name learn-kedro --role contributor --scopes /subscriptions/<subscription-id>
 ```
+
 Narrow the role access by using any of the role ids here: 
 [Available Roles](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#storage)
 
@@ -23,5 +24,13 @@ Output example:
   "password": "myServicePrincipalPassword",
   "tenant": "myTentantId"
 }
+```
+
+Add user access administrator role to the service principal:
+```bash
+az role assignment create \
+  --assignee "myAppId" \
+  --role "User Access Administrator" \
+  --scope /subscriptions/<subscription-id>
 ```
 ### 2. [Follow Steps for AZ CLI Secrets](https://learn.microsoft.com/en-us/cli/azure/azure-cli-sp-tutorial-1?view=azure-cli-latest&tabs=bash#create-a-service-principal)

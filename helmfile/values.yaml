@@ -1,4 +1,16 @@
 # Default values for learn-kedro-service
+
+# Deployment mode: 'job' for on-demand execution or 'deployment' for long-running service
+mode: job
+
+# Job specific configuration (used when mode is 'job')
+job:
+  # Time to keep completed jobs (in seconds)
+  ttlSecondsAfterFinished: 100
+  # Number of retries before considering a job as failed
+  backoffLimit: 3
+
+# Deployment specific configuration (used when mode is 'deployment')
 replicaCount: 1
 
 image:
@@ -10,7 +22,7 @@ service:
   type: ClusterIP
   port: 8888
 
-# Enable SSH access
+# Enable SSH access (only used in deployment mode)
 ssh:
   enabled: true
   port: 22

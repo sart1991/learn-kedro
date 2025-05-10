@@ -23,8 +23,8 @@ def create_pipeline(**kwargs) -> Pipeline:
             ),
             node(
                 func=create_confusion_matrix,
-                inputs="companies",
-                outputs="dummy_confusion_matrix",
+                inputs=["y_test", "y_pred"],
+                outputs="model_confusion_matrix_plot",
             ),
         ]
     )
