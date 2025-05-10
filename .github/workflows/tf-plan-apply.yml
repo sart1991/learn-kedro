@@ -48,14 +48,12 @@ jobs:
       id: create_state_config
       working-directory: ./infra
       run: |
-        echo "backend \"azurerm\" {
-          resource_group_name   = \"$TF_STATE_RESOURCE_GROUP_NAME\"
+        echo "resource_group_name   = \"$TF_STATE_RESOURCE_GROUP_NAME\"
           storage_account_name  = \"$TF_STATE_STORAGE_ACCOUNT_NAME\"
           container_name        = \"$TF_STATE_CONTAINER_NAME\"
           key                  = \"terraform.tfstate\"
           tenant_id            = \"$ARM_TENANT_ID\"
-          subscription_id      = \"$ARM_SUBSCRIPTION_ID\"
-        }" > state.config
+          subscription_id      = \"$ARM_SUBSCRIPTION_ID\"" > state.config
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
@@ -154,14 +152,12 @@ jobs:
     - name: Create state.config
       id: create_state_config
       run: |
-        echo "backend \"azurerm\" {
-          resource_group_name   = \"$TF_STATE_RESOURCE_GROUP_NAME\"
+        echo "resource_group_name   = \"$TF_STATE_RESOURCE_GROUP_NAME\"
           storage_account_name  = \"$TF_STATE_STORAGE_ACCOUNT_NAME\"
           container_name        = \"$TF_STATE_CONTAINER_NAME\"
           key                  = \"terraform.tfstate\"
           tenant_id            = \"$ARM_TENANT_ID\"
-          subscription_id      = \"$ARM_SUBSCRIPTION_ID\"
-        }" > state.config
+          subscription_id      = \"$ARM_SUBSCRIPTION_ID\"" > state.config
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
