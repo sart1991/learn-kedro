@@ -17,6 +17,7 @@ permissions:
   contents: read
 
 env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
   ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
@@ -81,7 +82,8 @@ jobs:
       run: |
         curl -Lo /tmp/helmfile https://github.com/helmfile/helmfile/releases/download/v0.151.0/helmfile_linux_amd64
         chmod +x /tmp/helmfile
-        sudo mv /tmp/helmfile /usr/local/bin/
+        sudo mv /tmp/helmfile /usr/local/bin/helmfile
+        helmfile --version # Verify installation
 
     # Login to Azure
     - name: Azure Login
