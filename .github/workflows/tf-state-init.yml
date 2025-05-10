@@ -1,0 +1,38 @@
+name: tf-state-init.yml
+on:
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  TF_STATE_RESOURCE_GROUP_NAME: ${{ vars.TF_STATE_RESOURCE_GROUP_NAME }}
+  TF_STATE_STORAGE_ACCOUNT_NAME: ${{ vars.TF_STATE_STORAGE_ACCOUNT_NAME }}
+  TF_STATE_CONTAINER_NAME: ${{ vars.TF_STATE_CONTAINER_NAME }}
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+
+jobs:
+  az-tf-state:
+    name: 'Terraform State Setup'
+    runs-on: ubuntu-latest
+    env:
+      ARM_SKIP_PROVIDER_REGISTRATION: true
+    steps:
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - name: Create state.config
+        id: create_state_config
+        run: |
+          echo "resource_group_name   = \"$TF_STATE_RESOURCE_GROUP_NAME\"
+            storage_account_name  = \"$TF_STATE_STORAGE_ACCOUNT_NAME\"
+            container_name        = \"$TF_STATE_CONTAINER_NAME\"
+            key                  = \"terraform.tfstate\"
+            tenant_id            = \"$ARM_TENANT_ID\"
+            subscription_id      = \"$ARM_SUBSCRIPTION_ID\"" > state.config
+      - name: Terraform Init
+        id: tf-init
+        run: |
+          terraform init -backend-config=state.config
+          echo "exitcode=$?" >> $GITHUB_OUTPUT

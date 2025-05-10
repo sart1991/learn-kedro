@@ -1,29 +1,44 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source  = "hashicorp/azurerm"
-      version = ">= 3.7.0"
+resource "random_pet" "rg_name" {
+  prefix = var.resource_group_name_prefix
+}
+
+resource "azurerm_resource_group" "rg" {
+  location = var.resource_group_location
+  name     = random_pet.rg_name.id
+}
+
+resource "random_pet" "azurerm_kubernetes_cluster_name" {
+  prefix = "cluster"
+}
+
+resource "random_pet" "azurerm_kubernetes_cluster_dns_prefix" {
+  prefix = "dns"
+}
+
+resource "azurerm_kubernetes_cluster" "k8s" {
+  location            = azurerm_resource_group.rg.location
+  name                = random_pet.azurerm_kubernetes_cluster_name.id
+  resource_group_name = azurerm_resource_group.rg.name
+  dns_prefix          = random_pet.azurerm_kubernetes_cluster_dns_prefix.id
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  default_node_pool {
+    name       = "agentpool"
+    vm_size    = "Standard_D2_v2"
+    node_count = var.node_count
+  }
+  linux_profile {
+    admin_username = var.username
+
+    ssh_key {
+      key_data = azapi_resource_action.ssh_public_key_gen.output.publicKey
     }
   }
-
-  # Update this block with the location of your terraform state file
-  backend "azurerm" {
-    resource_group_name  = ""
-    storage_account_name = ""
-    container_name       = ""
-    key                  = ""
-    tenant_id            = ""
-    subscription_id      = ""
+  network_profile {
+    network_plugin    = "kubenet"
+    load_balancer_sku = "standard"
   }
-}
-
-provider "azurerm" {
-  features {}
-  use_oidc = true
-}
-
-# Define any Azure resources to be created here. A simple resource group is shown here as a minimal example.
-resource "azurerm_resource_group" "rg-aks" {
-  name     = var.resource_group_name
-  location = var.location
 }
