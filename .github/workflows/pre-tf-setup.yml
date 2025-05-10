@@ -49,8 +49,9 @@ jobs:
       - name: Check if storage container exists
         id: check_storage_container
         run: |
-          az storage container exists --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME
-          echo "exists=$(az storage container exists --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME)" >> $GITHUB_OUTPUT
+          az_sa_key=$(az storage account keys list --account-name $TF_STATE_STORAGE_ACCOUNT_NAME --query '[0].value' --output tsv)
+          az storage container exists --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME --account-key $az_sa_key
+          echo "exists=$(az storage container exists --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME --account-key $az_sa_key --query exists)" >> $GITHUB_OUTPUT
 
       - name: Azure Create Storage Container
         if: steps.check_storage_container.outputs.exists == 'false'
@@ -58,4 +59,5 @@ jobs:
         with:
           azcliversion: latest
           inlineScript: |
-            az storage container create --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME
+            az_sa_key=$(az storage account keys list --account-name $TF_STATE_STORAGE_ACCOUNT_NAME --query '[0].value' --output tsv)
+            az storage container create --name $TF_STATE_CONTAINER_NAME --account-name $TF_STATE_STORAGE_ACCOUNT_NAME --account-key $az_sa_key
