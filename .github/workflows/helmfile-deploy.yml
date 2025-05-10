@@ -29,7 +29,7 @@ jobs:
   deploy:
     name: 'Deploy with Helmfile'
     runs-on: ubuntu-latest
-    
+
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
@@ -65,7 +65,7 @@ jobs:
         ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)
         AKS_NAME=$(terraform output -raw kubernetes_cluster_name)
         AKS_RESOURCE_GROUP=$(terraform output -raw resource_group_name)
-        
+
         echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
         echo "aks_name=$AKS_NAME" >> $GITHUB_OUTPUT
         echo "aks_resource_group=$AKS_RESOURCE_GROUP" >> $GITHUB_OUTPUT
@@ -79,9 +79,9 @@ jobs:
     # Install Helmfile
     - name: Set up Helmfile
       run: |
-        curl -Lo helmfile https://github.com/helmfile/helmfile/releases/download/v0.151.0/helmfile_linux_amd64
-        chmod +x helmfile
-        sudo mv helmfile /usr/local/bin/
+        curl -Lo /tmp/helmfile https://github.com/helmfile/helmfile/releases/download/v0.151.0/helmfile_linux_amd64
+        chmod +x /tmp/helmfile
+        sudo mv /tmp/helmfile /usr/local/bin/
 
     # Login to Azure
     - name: Azure Login
