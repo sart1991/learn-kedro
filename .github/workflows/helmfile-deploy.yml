@@ -105,4 +105,5 @@ jobs:
         ACR_LOGIN_SERVER: ${{ steps.infra_details.outputs.acr_login_server }}
         IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
       with:
+        helmfile-workdirectory: ./helmfile
         helmfile-args: apply

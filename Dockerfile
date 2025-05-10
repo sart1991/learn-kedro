@@ -1,5 +1,16 @@
-ARG BASE_IMAGE=python:3.9-slim
-FROM $BASE_IMAGE as runtime-environment
+FROM --platform=linux/amd64 python:3.9-slim as runtime-environment
+
+# Install Java (required for PySpark)
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    default-jre \
+    procps \
+    && apt-get clean && \
+    rm -rf /var/lib/apt/lists/* \
+
+ENV JAVA_HOME=/usr/lib/jvm/default-java
+# Add JAVA_HOME/bin to the PATH
+ENV PATH=$JAVA_HOME/bin:$PATH
 
 # update pip and install uv
 RUN python -m pip install -U "pip>=21.2"
