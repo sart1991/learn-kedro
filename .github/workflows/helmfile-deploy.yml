@@ -100,9 +100,10 @@ jobs:
 
     # Deploy with Helmfile
     - name: Deploy with Helmfile
+      uses: helmfile/helmfile-action@v2.0.4
       working-directory: ./helmfile
       env:
         ACR_LOGIN_SERVER: ${{ steps.infra_details.outputs.acr_login_server }}
         IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
-      run: |
-        helmfile apply
+      with:
+        helmfile-args: apply
