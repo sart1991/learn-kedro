@@ -1,0 +1,16 @@
+# Helmfile for learn-kedro-service
+repositories:
+  - name: stable
+    url: https://charts.helm.sh/stable
+
+releases:
+  - name: learn-kedro-service
+    namespace: default
+    chart: ./charts/learn-kedro-service
+    values:
+      - ./values.yaml
+    set:
+      - name: image.repository
+        value: "{{ requiredEnv "ACR_LOGIN_SERVER" }}/kedro-app"
+      - name: image.tag
+        value: "{{ env "IMAGE_TAG" | default "latest" }}"

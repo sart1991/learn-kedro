@@ -1,0 +1,108 @@
+name: 'Helmfile Deploy'
+
+on:
+  workflow_run:
+    workflows: ["Docker Build and Push"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: false
+        default: 'latest'
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+  ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+  ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  TF_STATE_RESOURCE_GROUP_NAME: ${{ vars.TF_STATE_RESOURCE_GROUP_NAME }}
+  TF_STATE_STORAGE_ACCOUNT_NAME: ${{ vars.TF_STATE_STORAGE_ACCOUNT_NAME }}
+  TF_STATE_CONTAINER_NAME: ${{ vars.TF_STATE_CONTAINER_NAME }}
+
+jobs:
+  deploy:
+    name: 'Deploy with Helmfile'
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    # Install the latest version of the Terraform CLI
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_wrapper: false
+
+    - name: Create state.config
+      id: create_state_config
+      working-directory: ./infra
+      run: |
+        echo "resource_group_name   = \"$TF_STATE_RESOURCE_GROUP_NAME\"
+          storage_account_name  = \"$TF_STATE_STORAGE_ACCOUNT_NAME\"
+          container_name        = \"$TF_STATE_CONTAINER_NAME\"
+          key                  = \"terraform.tfstate\"
+          tenant_id            = \"$ARM_TENANT_ID\"
+          subscription_id      = \"$ARM_SUBSCRIPTION_ID\"" > state.config
+
+    # Initialize Terraform to get the outputs
+    - name: Terraform Init
+      working-directory: ./infra
+      run: terraform init -backend-config=state.config
+
+    # Get ACR and AKS details from Terraform outputs
+    - name: Get Infrastructure Details
+      id: infra_details
+      working-directory: ./infra
+      run: |
+        ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)
+        AKS_NAME=$(terraform output -raw kubernetes_cluster_name)
+        AKS_RESOURCE_GROUP=$(terraform output -raw resource_group_name)
+        
+        echo "acr_login_server=$ACR_LOGIN_SERVER" >> $GITHUB_OUTPUT
+        echo "aks_name=$AKS_NAME" >> $GITHUB_OUTPUT
+        echo "aks_resource_group=$AKS_RESOURCE_GROUP" >> $GITHUB_OUTPUT
+
+    # Install Helm
+    - name: Set up Helm
+      uses: azure/setup-helm@v3
+      with:
+        version: 'latest'
+
+    # Install Helmfile
+    - name: Set up Helmfile
+      run: |
+        curl -Lo helmfile https://github.com/helmfile/helmfile/releases/download/v0.151.0/helmfile_linux_amd64
+        chmod +x helmfile
+        sudo mv helmfile /usr/local/bin/
+
+    # Login to Azure
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    # Get AKS credentials
+    - name: Get AKS Credentials
+      run: |
+        az aks get-credentials \
+          --resource-group ${{ steps.infra_details.outputs.aks_resource_group }} \
+          --name ${{ steps.infra_details.outputs.aks_name }}
+
+    # Deploy with Helmfile
+    - name: Deploy with Helmfile
+      working-directory: ./helmfile
+      env:
+        ACR_LOGIN_SERVER: ${{ steps.infra_details.outputs.acr_login_server }}
+        IMAGE_TAG: ${{ github.event.inputs.image_tag || github.sha }}
+      run: |
+        helmfile apply

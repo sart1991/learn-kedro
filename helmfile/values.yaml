@@ -1,0 +1,41 @@
+# Default values for learn-kedro-service
+replicaCount: 1
+
+image:
+  repository: kedro-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8888
+
+# Enable SSH access
+ssh:
+  enabled: true
+  port: 22
+
+# Resource specifications as per requirements
+resources:
+  limits:
+    cpu: 2
+    memory: 8Gi
+  requests:
+    cpu: 1
+    memory: 4Gi
+
+# Storage configuration
+persistence:
+  enabled: true
+  size: 10Gi
+  mountPath: /home/kedro_docker/data
+
+# Pod security context
+securityContext:
+  runAsUser: 999
+  runAsGroup: 0
+  fsGroup: 0
+
+# Container security context
+containerSecurityContext:
+  allowPrivilegeEscalation: false
