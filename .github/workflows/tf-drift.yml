@@ -16,6 +16,9 @@ env:
   ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  TF_STATE_RESOURCE_GROUP_NAME: ${{ vars.TF_STATE_RESOURCE_GROUP_NAME }}
+  TF_STATE_STORAGE_ACCOUNT_NAME: ${{ vars.TF_STATE_STORAGE_ACCOUNT_NAME }}
+  TF_STATE_CONTAINER_NAME: ${{ vars.TF_STATE_CONTAINER_NAME }}
 
 jobs:
   terraform-plan:
@@ -38,14 +41,30 @@ jobs:
       with:
         terraform_wrapper: false
 
+    # Create state.config file for backend configuration
+    - name: Create state.config
+      id: create_state_config
+      working-directory: ./infra
+      run: |
+        echo "backend \"azurerm\" {
+          resource_group_name   = \"$TF_STATE_RESOURCE_GROUP_NAME\"
+          storage_account_name  = \"$TF_STATE_STORAGE_ACCOUNT_NAME\"
+          container_name        = \"$TF_STATE_CONTAINER_NAME\"
+          key                  = \"terraform.tfstate\"
+          tenant_id            = \"$ARM_TENANT_ID\"
+          subscription_id      = \"$ARM_SUBSCRIPTION_ID\"
+        }" > state.config
+
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
-      run: terraform init
+      working-directory: ./infra
+      run: terraform init -backend-config=state.config
 
     # Generates an execution plan for Terraform
     # An exit code of 0 indicated no changes, 1 a terraform failure, 2 there are pending changes.
     - name: Terraform Plan
       id: tf-plan
+      working-directory: ./infra
       run: |
         export exitcode=0
         terraform plan -detailed-exitcode -no-color -out tfplan || export exitcode=$?
@@ -64,11 +83,12 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: tfplan
-        path: tfplan
+        path: ./infra/tfplan
 
     # Create string output of Terraform Plan
     - name: Create String Output
       id: tf-plan-string
+      working-directory: ./infra
       run: |
         TERRAFORM_PLAN=$(terraform show -no-color tfplan)
         
