@@ -80,10 +80,10 @@ jobs:
     # Install Helmfile
     - name: Set up Helmfile
       run: |
-        curl -Lo /tmp/helmfile https://github.com/helmfile/helmfile/releases/download/v0.151.0/helmfile_linux_amd64
+        curl -L -o /tmp/helmfile https://github.com/helmfile/helmfile/releases/download/v0.151.0/helmfile_linux_amd64
         chmod +x /tmp/helmfile
         sudo mv /tmp/helmfile /usr/local/bin/helmfile
-        helmfile --version # Verify installation
+        /usr/local/bin/helmfile --version # Verify installation
 
     # Login to Azure
     - name: Azure Login
